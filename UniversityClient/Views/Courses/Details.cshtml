@@ -1,0 +1,65 @@
+@model UniversityClient.Models.ClientResponse<UniversityClient.Models.CourseViewModel>
+
+@{
+    ViewData["Title"] = Model.Data != null ? Model.Data.Name : "Сведения о курсе";
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">&larr; Вернуться к списку курсов</a>
+</div>
+
+@if (!Model.Success)
+{
+    <div class="alert alert-danger shadow-sm" role="alert">
+        <h4 class="alert-heading">Ошибка получения данных о курсе</h4>
+        <p class="mb-0">@Model.ErrorMessage</p>
+    </div>
+}
+else if (Model.Data == null)
+{
+    <div class="alert alert-warning" role="alert">
+        Курс не найден.
+    </div>
+}
+else
+{
+    var course = Model.Data;
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+            <h2 class="h4 mb-0">@course.Name</h2>
+            <span class="badge bg-light text-primary fs-6">@course.Credits кредитов</span>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h5 class="text-muted">Описание</h5>
+                <p class="lead">@course.Description</p>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light">
+                        <h6 class="text-primary fw-bold mb-2">Информация о преподавателе</h6>
+                        @if (course.Teacher != null)
+                        {
+                            <div><strong>ФИО:</strong> @course.Teacher.FirstName @course.Teacher.LastName</div>
+                            <div><strong>Кафедра:</strong> @course.Teacher.Department</div>
+                            <div><strong>Email:</strong> <a href="mailto:@course.Teacher.Email">@course.Teacher.Email</a></div>
+                        }
+                        else
+                        {
+                            <div>ID преподавателя: @course.TeacherId</div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 border rounded bg-light">
+                        <h6 class="text-primary fw-bold mb-2">Статистика курса</h6>
+                        <div><strong>Количество записанных студентов:</strong> @course.EnrolledStudentsCount</div>
+                        <div><strong>Дата создания:</strong> @course.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                        <div><strong>Идентификатор курса:</strong> @course.Id</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
