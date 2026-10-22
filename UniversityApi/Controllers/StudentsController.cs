@@ -1,4 +1,7 @@
-﻿using AutoMapper;
+using System.Security.Claims;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using UniversityApi.Common;
 using UniversityApi.DTO;
@@ -12,17 +15,24 @@ namespace UniversityApi.Controllers;
 public class StudentsController : ControllerBase
 {
     private readonly IRepository<Student> _studentRepo;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IMapper _mapper;
     private readonly ILogger<StudentsController> _logger;
 
-    public StudentsController(IRepository<Student> studentRepo, IMapper mapper, ILogger<StudentsController> logger)
+    public StudentsController(
+        IRepository<Student> studentRepo,
+        UserManager<ApplicationUser> userManager,
+        IMapper mapper,
+        ILogger<StudentsController> logger)
     {
         _studentRepo = studentRepo;
+        _userManager = userManager;
         _mapper = mapper;
         _logger = logger;
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Teacher")]
     public async Task<ActionResult<ReturnResult<IEnumerable<StudentDto>>>> GetAll()
     {
         _logger.LogInformation("Getting all students");
@@ -32,8 +42,18 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<ReturnResult<StudentDto>>> GetById(int id)
     {
+        if (User.IsInRole("Student"))
+        {
+            var studentId = await GetCurrentStudentIdAsync();
+            if (!studentId.HasValue || studentId.Value != id)
+            {
+                return StatusCode(403, ReturnResult<StudentDto>.Fail("FORBIDDEN", "Students can only access their own student profile", 403));
+            }
+        }
+
         var student = await _studentRepo.GetByIdAsync(id);
         if (student == null)
         {
@@ -45,6 +65,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ReturnResult<StudentDto>>> Create(StudentCreateDto dto)
     {
         var student = _mapper.Map<Student>(dto);
@@ -54,6 +75,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ReturnResult<StudentDto>>> Update(int id, StudentUpdateDto dto)
     {
         var student = await _studentRepo.GetByIdAsync(id);
@@ -69,6 +91,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ReturnResult<string>>> Delete(int id)
     {
         var student = await _studentRepo.GetByIdAsync(id);
@@ -80,5 +103,20 @@ public class StudentsController : ControllerBase
         await _studentRepo.DeleteAsync(student);
         _logger.LogInformation("Student deleted with id {Id}", id);
         return Ok(ReturnResult<string>.Success("Student deleted successfully"));
+    }
+
+    private async Task<int?> GetCurrentStudentIdAsync()
+    {
+        var claim = User.FindFirstValue("StudentId");
+        if (int.TryParse(claim, out var id))
+        {
+            return id;
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return null;
+
+        var user = await _userManager.FindByIdAsync(userId);
+        return user?.StudentId;
     }
 }

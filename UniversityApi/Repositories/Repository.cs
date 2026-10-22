@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using UniversityApi.Data;
 
@@ -42,4 +42,6 @@ public class Repository<T> : IRepository<T> where T : class
 
     public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate) => 
         await _dbSet.AnyAsync(predicate);
+
+    public IQueryable<T> Query() => _dbSet.AsQueryable();
 }

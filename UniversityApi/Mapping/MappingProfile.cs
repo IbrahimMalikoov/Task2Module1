@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using UniversityApi.DTO;
 using UniversityApi.Models;
 
@@ -17,6 +17,8 @@ public class MappingProfile : Profile
 
         CreateMap<Course, CourseDto>().ReverseMap();
         CreateMap<CourseCreateDto, Course>();
+        CreateMap<Course, CourseV2Dto>()
+            .ForMember(dest => dest.EnrolledStudentsCount, opt => opt.MapFrom(src => src.Enrollments.Count));
 
         CreateMap<Enrollment, EnrollmentDto>().ReverseMap();
         CreateMap<EnrollmentCreateDto, Enrollment>();

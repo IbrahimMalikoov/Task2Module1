@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using UniversityApi.Models;
 
 namespace UniversityApi.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -37,5 +38,17 @@ public class ApplicationDbContext : DbContext
             .WithMany(c => c.Enrollments)
             .HasForeignKey(e => e.CourseId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ApplicationUser>()
+            .HasOne(u => u.Teacher)
+            .WithMany()
+            .HasForeignKey(u => u.TeacherId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ApplicationUser>()
+            .HasOne(u => u.Student)
+            .WithMany()
+            .HasForeignKey(u => u.StudentId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
