@@ -82,7 +82,7 @@ dotnet run --project UniversityClient/UniversityClient.csproj --urls "http://loc
 
 ---
 
-## Реализованные сценарии безопасности
+## Реализованные сценарии безопасности.
 
 1. **Анонимный доступ к курсам:** `GET /api/v1/courses` возвращает `200 OK`.
 2. **Анонимное создание:** `POST /api/v1/courses` возвращает `401 Unauthorized`.
